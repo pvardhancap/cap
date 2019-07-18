@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<head>
+    <title>All Items</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.js"
+        integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <script defer src="js/all.js"></script>
+    <link href="css/cart-widget.css" rel="stylesheet" type="text/css" />
+    <link href="css/all.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div class="items-section">
+        <div class="items-section-header">
+            <label class="items-section-header-label-left">All Items</label>
+            <label class="items-section-header-label-middle"></label>
+            <div class="items-section-header-right">
+                <label class="items-section-header-label-right"> Go to cart</label>
+                <svg class="hidden">
+                    <g>
+                        <circle r="8" cx="8" cy="8" />
+                        <text x="50%" y="50%" font-weight="lighter" font-size="smaller" text-anchor="middle"
+                            stroke="black" stroke-width="0.25" alignment-baseline="central"></text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+        <div class="items-section-content">
+            <div class="items-section-content-item-list"></div>
+        </div>
+    </div>
+    <div class="cart-section hidden">
+        <div class="cart-section-header">
+            <div class="cart-header">
+                <div class="cart-header-left-section">
+                    <div class="cart-header-back">
+                        <a href="#" class="cart-header-nav-back">
+                            <i class="fas fa-angle-left"></i></a></div>
+                    <div class="cart-header-label">Order Summary</div>
+                </div>
+                <div class="cart-header-mid-section"></div>
+            </div>
+        </div>
+        <div class="cart-section-content hidden">
+            <div class="cart-detail-section">
+                <table class="cart-detail-table">
+                    <thead class="cart-detail-header-section">
+                        <tr>
+                            <th>Items</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody class="cart-detail-line-items-section"></tbody>
+                </table>
+            </div>
+            <div class="cart-total-section">
+                <table class="cart-total-table">
+                    <thead class="cart-total-table-header-section">
+                        <tr><th>Total</th></tr>
+                    </thead>
+                    <tbody class="cart-total-detail-section">
+                        <tr><td class='cart-total-row-label'>
+                            <label></label>
+                            <label>:</label></td>
+                            <td class='cart-total-row-value'></td></tr>
+
+                        <tr><td class='cart-total-row-label'>
+                            <label>Discount</label>
+                            <label>:</label></td>
+                            <td class='cart-total-row-value'></td></tr>
+                        <tr><td class='cart-total-row-label' >
+                            <label>Type Discount</label>
+                            <label>:</label></td>
+                            <td class='cart-total-row-value'></td></tr>
+                    </tbody>
+                    <tbody class="cart-total-table-footer-section">
+                        <tr><td class='cart-total-footer-label'>
+                            <label>Order Total</label>
+                            <label>:</label></td>
+                            <td class='cart-total-footer-value'></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function getDiscountedPrice (item) {
+        //console.log("getDiscountedPrice ", item);
+        return item.price * (1 - (item.discount / 100));
+    }
+
+    function getTotalPriceForItem(qty, price) {
+        //console.log("getTotalPriceForItem qty", qty) ;
+        //console.log("getTotalPriceForItem price", price) ;
+        return (qty * price);
+    }
+    function getTotalDiscountForItem (quantity, price, discount ) {
+        let perItemDisc = price * (discount/100);
+        return quantity * perItemDisc;
+    }
+    function createItem(itemContent) {
+        console.log("createItem()");
+        let itemContentArray = [];
+        let itemHeader = $('<div/>').addClass('item-section-header-part');
+        itemContentArray.push(itemHeader);
+        let itemBody = $('<div/>').addClass('item-section-body-part');
+        let discountSection = $('<div/>').addClass('item-discount-section').appendTo(itemBody);
+        let discount_value = itemContent.discount != 0 ? itemContent.discount + " %" : " ";
+        if (discount_value.trim().length != 0) {
+            discountSection.addClass('item-discount-section-not-blank');
+        }
+        let discount = $('<label/>').addClass('item-discount').text(discount_value).appendTo(discountSection);
+        let imgSection = $('<div/>').addClass('item-image-section').appendTo(itemBody);
+        let itemImage = $('<img/>').addClass('item-image').attr('src', itemContent.img_url).attr('alt',
+            'Book Not available').appendTo(imgSection);
+        itemContentArray.push(itemBody);
+        let itemNameSection = $('<div/>').addClass('item-name-section');
+        let itemName = $('<label/>').addClass('item-name').text(itemContent.name).appendTo(itemNameSection);
+        itemContentArray.push(itemNameSection);
+        let itemFooter = $('<div/>').addClass('item-section-footer-part');
+        let itemPriceSection = $('<div/>').addClass('item-section-footer-price').appendTo(itemFooter);
+        let discountedPrice = getDiscountedPrice(itemContent);
+        let discountedPriceStr = "$" + discountedPrice;
+        let itemActualPrice = $('<label/>').addClass('item-price-actual').text("$" + itemContent.price).appendTo(
+            itemPriceSection);
+        if (itemContent.discount > 0) {
+            itemActualPrice.addClass('strike-actual-price').addClass('strike-symbol');
+            let itemDiscountedPrice = $('<label/>').addClass('item-price-afterDiscount').text(discountedPriceStr)
+                .appendTo(itemPriceSection);
+        }
+        let itemAddButtonSection = $('<div/>').addClass('item-add-btn-section').appendTo(itemFooter);
+        $(itemAddButtonSection).on('click', function(event) {
+            //console.log('Added click');
+            addItem(itemContent);
+            updateItemHeaderLabel(itemContent);
+        });
+
+        let itemAddButton = $('<label/>').addClass('item-add-btn').text('Add to cart').appendTo(itemAddButtonSection);
+        itemContentArray.push(itemFooter);
+        return itemContentArray;
+    }
+
+    function updateItemHeaderLabel(item) {
+        $('.items-section-header-label-middle').text(item.name + " is added to cart");
+    }
+
+    function getItemQuantityInCart(itemId) {
+        console.log('getItemQuantityInCart()');
+        let cartItems = getCartItems();
+        if (cartItems) {
+            //console.log('getItemQuantityInCart -> ', cartItems);
+            if (cartItems.length > 0) {
+                let qty = 0;
+                cartItems.forEach(element => {
+                    if (element.id === itemId) {
+                        qty = element.quantity;
+                        //console.log('qty ', qty);
+                    }
+                });
+                return qty;
+            } else {
+                return 0;
+            }  
+        } else {
+            throw 'error : can\'t perform this operation for undefined cartItems';
+        }
+    }
+
+    function addItem(item) {
+        console.log('addItem()');
+        let currentQty = getItemQuantityInCart(item.id);
+        if (currentQty >= 0) {
+            if (currentQty > 0) { 
+            // update to UI and update to cart
+                updateCartItem(item, currentQty);
+            }
+            else {
+                // add item in UI and add to cart
+                addCartItem(item);
+            }
+            updateCartView();
+        } else {
+            throw 'can\'t find quantity for undefined';
+            
+        }
+        
+    }
+
+    function updateCartItem(item, qty) {
+        console.log("updateCartItem()");
+        let cartItem = {
+            id: item.id,
+            quantity: qty + 1,
+            ref: item
+        };
+        let cart = getCartItems();
+        if (cart) {
+            cart.forEach((element, index) => {
+                if (element.id === item.id) {
+                    cart.splice(index, 1, cartItem);
+                }
+            });
+            if (typeof (window.localStorage) != "undefined") {
+                localStorage.setItem('cartItems', JSON.stringify(cart));
+            }
+        }
+    }
+
+    function addCartItem(item) {
+        console.log("addCartItem()");
+        let cartItem = {
+            id: item.id,
+            quantity: 1,
+            ref: item
+        };
+        let cart = getCartItems();
+        if (cart) {
+            cart.push(cartItem);
+            if (typeof (window.localStorage) != "undefined") {
+                localStorage.setItem('cartItems', JSON.stringify(cart));
+            }
+        }
+    }
+
+    function updateCartView () {
+        console.log("updateCartView()");
+        let cart = getCartItems();
+        if (cart) {
+            $('.items-section-header-right svg text').text(cart.length);
+        }   
+    }
+
+    function getCartItems () {
+        console.log("getCartItems()");
+        if (typeof (window.localStorage) != "undefined") {
+            if ('cartItems' in localStorage) {
+                let localCartItems = JSON.parse(localStorage.getItem('cartItems'));
+                //console.log('localCartItems -> ', localCartItems);
+                return localCartItems;
+            } else {
+                localStorage.setItem('cartItems', '[]');
+                return [];
+            }
+        } else {
+            throw 'error : local storage undefined';
+        }
+    }
+
+    function refreshCartView () {
+        let cart = getCartItems();
+        if(cart) {
+            let lineItemSection = $('.cart-detail-line-items-section');
+            lineItemSection.html(null);
+            //console.log('col lable : ', $('.cart-detail-header-section tr').find('th:first').text());
+            let totalQuantity = 0;
+            let totalPrice = 0;
+            let totalDiscount = 0;
+            cart.forEach(element => {
+                //console.log(element);
+                let lineItemRow = $('<tr/>')
+                    .addClass('cart-detail-line-item-row')
+                    .appendTo(lineItemSection);
+                
+                let lineItemCol1 = $('<td/>')
+                    .addClass('cart-detail-line-item-col')
+                    .addClass('line-item-name-cell');
+
+                lineItemCol1.appendTo(lineItemRow);
+
+                let cellItemDescSection = $('<div/>')
+                    .addClass('cell-item-desc-section')
+                    .appendTo(lineItemCol1);
+                let cellItemDesc = $('<div/>')
+                    .addClass('cell-item-desc')
+                    .appendTo(cellItemDescSection);
+                let cellItemImg=$('<img/>')
+                    .attr('src', element.ref.img_url)
+                    .attr('alt','Book Not available')
+                    .attr('width','16px')
+                    .attr('height','16px')
+                    .appendTo(cellItemDesc);
+                
+                let cellItemLabelName=$('<label/>')
+                    .text(element.ref.name)
+                    .appendTo(cellItemDesc);
+                // <a href="#" class="line-item-remove-btn"><i class="icon-remove"></i></a>'
+                let cellItemLabelRemove=$('<div/>')
+                    .addClass('align-right')
+                    .addClass('line-item-remove-section')
+                    .append($('<a href="#" class="line-item-remove-btn"><i class="fa fa-times"></i></a>'))
+                    .appendTo(cellItemDescSection);
+
+                let lineItemCol2 = $('<td/>').addClass('cart-detail-line-item-col')
+                    .addClass('line-item-qty-cell');
+                let lineItemQtySecton = $('<div/>')
+                    .addClass('line-item-qty-section')
+                    .appendTo(lineItemCol2);
+                let lineItemAddBtn = $('<div/>')
+                    .append($('<i class="fa fa-plus"></i>'))
+                    .appendTo(lineItemQtySecton);
+                let lineItemQtyLabel = $('<div/>')
+                    .addClass('line-item-qty')
+                    .text(element.quantity)
+                    .appendTo(lineItemQtySecton);
+                let lineItemRemoveBtn = $('<div/>')
+                    .append($('<i class="fa fa-minus"></i>'))
+                    .appendTo(lineItemQtySecton);
+                totalQuantity += element.quantity;
+                lineItemCol2.appendTo(lineItemRow);
+
+                let lineItemCol3 = $('<td/>').addClass('cart-detail-line-item-col')
+                    .addClass('line-item-price-cell')
+                    .html("$ "+ getTotalPriceForItem(element.quantity, getDiscountedPrice(element.ref)));
+                    totalPrice += getTotalPriceForItem(element.quantity, element.ref.price);
+                    totalDiscount += getTotalDiscountForItem (element.quantity, element.ref.price, element.ref.discount );
+                lineItemCol3.appendTo(lineItemRow);
+            });
+
+            $('.cart-detail-header-section tr').find('th:first').text('Items (' + totalQuantity + ')');
+            
+            return {
+                totalItems : totalQuantity,
+                totalActualPrice : totalPrice,
+                totalDiscountAvailed: totalDiscount,
+                totalTypeDiscountAvailed: 0
+            };
+        }
+    }
+
+    function refreshCartTotalView (summary) {
+        
+        let allItemRowLabelLeftSection = $('.cart-total-row-label label').first()
+            .text("Items ("+summary.totalItems+")");
+        
+        $('.cart-total-row-value').first()
+            .text("$"+summary.totalActualPrice);
+        $('.cart-total-row-value:eq(1)')
+            .text("-$"+summary.totalDiscountAvailed);
+        $('.cart-total-row-value:eq(2)')
+            .text("-$"+summary.totalTypeDiscountAvailed);
+        let a = $('.cart-total-footer-value')
+            .text("$"+ (summary.totalActualPrice - summary.totalDiscountAvailed - summary.totalTypeDiscountAvailed));
+
+    }
+
+    async function  loadCartView () {
+        console.log("loadCartView() loaded");
+        await new Promise(resolve => {
+            setTimeout(() => {
+                let totalSummary = refreshCartView();
+                refreshCartTotalView(totalSummary);
+                resolve();
+            }, 3000);
+            
+        });
+    }
+
+    $(document).ready(() => {
+        console.log("index.html loaded");
+        $.ajax({
+            method: 'get',
+            url: 'https://api.myjson.com/bins/qhnfp',
+            success: (data, status, req) => {
+                let itemList = $('div.items-section-content .items-section-content-item-list');
+                //console.log("itemList: ", itemList);
+                $.each(data, i => {
+                    let li = $('<div/>').addClass('items-section-content-item').appendTo(
+                        itemList);
+                    let item = $('<div/>').addClass('item-section').append(createItem(data[
+                        i])).appendTo(li);
+                })
+            }
+        });
+
+        if (getCartItems()) {
+            $('.cart-detail-table tbody').addClass('hidden');
+            $('.items-section-header-right svg text').text(getCartItems().length);
+            $('.items-section-header-right svg').removeClass('hidden');
+        }
+        
+        $('.items-section-header-right').click((event) => {
+            //console.log("me clicked" , event);
+            $('.items-section').addClass('hidden');
+            $('.cart-section').removeClass('hidden')
+            loadCartView()
+                .then(resolved => {
+                    $('.cart-section-content').removeClass('hidden');
+                    $('.cart-detail-line-items-section').removeClass('hidden');
+                }, rejected => {
+                    console.log("rejected :", rejected);
+                })
+                .catch(error => {
+                    console.log("error :", error);
+                });
+            event.preventDefault();
+        });
+        $('.cart-header-nav-back').click((event) => {
+            $(document).scrollTop($('.items-section').offset().top);
+            $('.items-section').removeClass('hidden');
+            $('.cart-section').addClass('hidden');
+            event.preventDefault();
+        });
+
+    });
+</script>
+</html>
