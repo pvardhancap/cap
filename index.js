@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const hostname = "127.0.0.1";
+const hostname = process.env.HOST || "0.0.0.0";
 const port = process.env.PORT || 3000;
 const FAVICON = path.join(__dirname, 'public', 'favicon.ico');
 function setcontent(html_header, html_content) {
