@@ -1,0 +1,20 @@
+{
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "description": "",
+  "env": {
+    "PORT": "443"
+  },
+  "formation": {
+  },
+  "name": "cap",
+  "scripts": {
+  },
+  "stack": "heroku-18"
+}
